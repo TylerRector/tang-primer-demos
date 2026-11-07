@@ -1,5 +1,6 @@
-PROJECT := blink
-BITSTREAM := build/$(PROJECT)/impl/pnr/$(PROJECT).fs
+DEMO ?= dna_count
+PROJECT := $(DEMO)
+BITSTREAM := build/$(PROJECT)/$(PROJECT)/impl/pnr/$(PROJECT).fs
 BOARD ?= tangprimer20k
 GOWIN_HEADLESS_ENV := QT_QPA_PLATFORM=minimal QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1
 GOWIN_PROG ?= $(HOME)/gowin/Programmer/bin/programmer_cli
@@ -9,7 +10,7 @@ GOWIN_CABLE_INDEX ?= 5
 GOWIN_LOCATION ?= 49
 GOWIN_FREQ ?= 2.5MHz
 HDL_SRCS := \
-	src/top.v \
+	demos/dna_count.v \
 	src/uart_tx.v \
 	src/uart_rx.v \
 	src/command_parser.v \
@@ -38,12 +39,12 @@ check-uart-pin:
 	fi
 
 build: check-uart-pin
-	rm -rf build
-	$(GOWIN_HEADLESS_ENV) bash -lc 'gowin_sh build.tcl'
+	rm -rf build/$(PROJECT)
+	DEMO=$(DEMO) $(GOWIN_HEADLESS_ENV) bash -lc 'gowin_sh tooling/build.tcl'
 
 build-uart-smoke: check-uart-pin
-	rm -rf build
-	UART_SMOKE=1 $(GOWIN_HEADLESS_ENV) bash -lc 'gowin_sh build.tcl'
+	rm -rf build/$(PROJECT)
+	UART_SMOKE=1 DEMO=$(DEMO) $(GOWIN_HEADLESS_ENV) bash -lc 'gowin_sh tooling/build.tcl'
 
 program: build
 	openFPGALoader -b $(BOARD) $(BITSTREAM)
@@ -69,10 +70,10 @@ detect:
 	openFPGALoader --detect
 
 uart-discover:
-	python3 host/uart_discover.py --timeout 1.5
+	python3 tooling/uart_discover.py --timeout 1.5
 
 uart-smoke-test:
-	python3 host/uart_discover.py --ports $(PORT) --baud $(BAUD) --timeout 1.5 --render-controls
+	python3 tooling/uart_discover.py --ports $(PORT) --baud $(BAUD) --timeout 1.5 --render-controls
 
 flash:
 	@if [ "$(CONFIRM_FLASH)" != "1" ]; then \
@@ -84,7 +85,7 @@ flash:
 	openFPGALoader -b $(BOARD) --write-flash $(BITSTREAM)
 
 clean:
-	rm -rf build
+	rm -rf build/$(PROJECT)
 
 sim:
 	@command -v iverilog >/dev/null 2>&1 || { \
@@ -152,24 +153,30 @@ sim-render-small:
 	iverilog -g2012 -I src -o build/sim/tb_render_core_small.vvp sim/tb_render_core_small.v src/render_core.v src/sphere_intersect.v
 	vvp build/sim/tb_render_core_small.vvp
 
-sim-all: sim-uart sim-kmer sim-parser sim-video sim-render-small sim
+sim-all: sim-blink sim-uart sim-kmer sim-parser sim-video sim-render-small sim
 
 bio-test:
-	python3 host/bio_uart_test.py --port $(PORT) --baud $(BAUD)
+	python3 tooling/bio_uart_test.py --port $(PORT) --baud $(BAUD)
 
 bio-hw-test: bio-test
 
 bio-bench:
-	python3 host/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --csv results/kmer_uart_benchmark.csv
+	python3 tooling/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --csv results/kmer_uart_benchmark.csv
 
 bio-bench-stream:
-	python3 host/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --mode stream --chunk-size 64 --lengths 128,256,512,1024,4096,16384,65536 --csv results/kmer_uart_stream_benchmark.csv
+	python3 tooling/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --mode stream --chunk-size 64 --lengths 128,256,512,1024,4096,16384,65536 --csv results/kmer_uart_stream_benchmark.csv
 
 bio-bench-stream-sweep:
-	python3 host/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --mode stream --lengths 4096,16384,65536 --chunk-sizes 16,32,48,64,80,96,112 --csv results/kmer_uart_stream_chunk_sweep.csv
+	python3 tooling/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --mode stream --lengths 4096,16384,65536 --chunk-sizes 16,32,48,64,80,96,112 --csv results/kmer_uart_stream_chunk_sweep.csv
 
 bio-bench-stream-quiet:
-	python3 host/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --mode stream --ack-mode quiet --chunk-size 112 --lengths 4096,16384,65536 --csv results/kmer_uart_stream_quiet_benchmark.csv
+	python3 tooling/benchmark_kmer_uart.py --port /dev/ttyUSB1 --baud 115200 --mode stream --ack-mode quiet --chunk-size 112 --lengths 4096,16384,65536 --csv results/kmer_uart_stream_quiet_benchmark.csv
 
 bench-small:
-	python3 tools/bio_uart_host.py --port /dev/ttyUSB1 count --pattern ACGTACGT --sequence ACGTACGTACGTACGT
+	python3 tooling/bio_uart_host.py --port /dev/ttyUSB1 count --pattern ACGTACGT --sequence ACGTACGTACGTACGT
+
+.PHONY: sim-blink
+sim-blink:
+	mkdir -p build/sim
+	iverilog -g2012 -o build/sim/tb_blink.vvp sim/tb_blink.v demos/blink.v
+	vvp build/sim/tb_blink.vvp

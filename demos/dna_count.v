@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module top #(
+module dna_count #(
     parameter integer HEARTBEAT_TOGGLE_CYCLES = 13_500_000
 ) (
     input wire Clock,

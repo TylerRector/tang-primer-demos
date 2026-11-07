@@ -10,7 +10,7 @@ module top_tb;
     integer uart_edges = 0;
     reg [8*64-1:0] line;
 
-    top #(
+    dna_count #(
         .HEARTBEAT_TOGGLE_CYCLES(64)
     ) dut (
         .Clock(Clock),

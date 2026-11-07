@@ -1,0 +1,4 @@
+IO_LOC "Clock" H11;
+IO_PORT "Clock" IO_TYPE=LVCMOS18;
+IO_LOC "IO_voltage" L14;
+IO_PORT "IO_voltage" IO_TYPE=LVCMOS18;

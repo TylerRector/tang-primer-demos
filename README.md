@@ -1,31 +1,40 @@
-# Tang Primer 20K FPGA Demo
+# Tang Primer Demos
 
-Verilog project for the Sipeed Tang Primer 20K with Dock board.
-Includes a 1 Hz heartbeat LED, UART commands, DNA pattern counting,
-and experimental rendering logic. The heartbeat drives `IO_voltage`.
+FPGA demos for the Sipeed Tang Primer 20K with Dock board.
+
+- [`demos/blink.v`](demos/blink.v): standalone 1 Hz LED blink.
+- [`demos/dna_count.v`](demos/dna_count.v): UART DNA pattern counting with a heartbeat LED.
+- `src/`: supporting HDL and experimental renderer modules.
+- `tooling/`: Gowin build script and Python UART, benchmark, and frame utilities.
+- `sim/`: simulation testbenches.
 
 ## Build and run
 
-Requires Gowin EDA (`gowin_sh` on `PATH`), Icarus Verilog for simulation,
-and openFPGALoader for programming.
+Requires Gowin EDA (`gowin_sh` on `PATH`), openFPGALoader for programming,
+and Icarus Verilog for simulation. Python serial utilities require `pyserial`.
 
 ```sh
-make sim-all       # Run simulations
-make build         # Build the bitstream
-make program       # Build and load into SRAM
+make sim-all
+make build DEMO=blink
+make program DEMO=blink
+make build DEMO=dna_count
+make program DEMO=dna_count
 ```
 
-Connect the Dock JTAG/UART USB-C port. Pin assignments are in
-`constraints/tang_primer_20k_dock.cst`.
-The bitstream is written to `build/blink/impl/pnr/blink.fs`.
+`DEMO` defaults to `dna_count`. Bitstreams are written to
+`build/<demo>/<demo>/impl/pnr/<demo>.fs`.
+Connect the Dock JTAG/UART USB-C port. Pin assignments are in `constraints/`.
 
-## Source
+The DNA demo accepts newline-terminated UART commands at 115200 baud, 8N1:
 
-- `src/status_leds.v`: heartbeat and activity LEDs.
-- `src/top.v`: main design; UART runs at 115200 baud, 8N1.
-- `src/`: UART, pattern counter, and experimental renderer modules.
-- `sim/`: simulation testbenches.
-- `host/` and `tools/`: Python utilities (serial tools require `pyserial`).
+```text
+SETPAT ACGTACGT
+COUNT ACGTACGTACGTACGT
+```
 
-UART accepts newline-terminated commands such as `PING`, `VERSION`, and `STATUS`.
-Rendering support is experimental; this project does not provide HDMI output.
+The count reply is `COUNT 3` (overlapping matches). Patterns must contain exactly
+eight uppercase A/C/G/T bases. `PING`, `VERSION`, and streaming counts are also supported.
+
+```sh
+python3 tooling/bio_uart_host.py --port /dev/ttyUSB1 count --pattern ACGTACGT --sequence ACGTACGTACGTACGT
+```
