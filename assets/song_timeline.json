@@ -1,0 +1,16 @@
+{
+  "tempo_bpm": 143.6,
+  "halftime_bpm": 71.8,
+  "sections": [
+    {"time": 0.0, "mode": "boot_scanline"},
+    {"time": 15.0, "mode": "fixed_precision"},
+    {"time": 24.0, "mode": "bitplane"},
+    {"time": 29.0, "mode": "parallel_units"},
+    {"time": 44.0, "mode": "debug_views"},
+    {"time": 60.0, "mode": "uncertainty_edges"},
+    {"time": 66.0, "mode": "cordic_tunnel"},
+    {"time": 75.0, "mode": "midframe_mutation"},
+    {"time": 97.0, "mode": "finale_splitview"},
+    {"time": 104.0, "mode": "outro_decay"}
+  ]
+}

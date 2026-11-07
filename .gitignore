@@ -1,0 +1,12 @@
+/build/
+/results/
+__pycache__/
+*.py[cod]
+.venv/
+*.vcd
+*.fst
+*.gprj.user
+*.before_*
+/SPEC_FPGA_RENDERER.md
+/TANG_PRIMER_20K_PROGRAMMING_FIX.md
+/baseline_check.sh
